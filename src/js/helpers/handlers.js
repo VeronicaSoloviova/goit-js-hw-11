@@ -2,6 +2,8 @@ import { imageApi } from '../imageAPI';
 import { Notify } from 'notiflix';
 import { renderGalleryMarkup, clearGalleryMarkup } from './renderfunctions';
 import { loadMoreBtn } from '../loadmorebt';
+import { gallery } from './simplelightbox';
+import { scrollBy } from './scrollfunction';
 
 export async function onFormSubmit(event) {
   event.preventDefault();
@@ -16,15 +18,17 @@ export async function onFormSubmit(event) {
   loadMoreBtn.hide();
   imageApi.searchQuery = searchQuery;
   try {
-    const { hits } = await imageApi.fetchImages();
+    const { hits, totalHits } = await imageApi.fetchImages();
     if (hits.length === 0) {
       Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
       return;
     }
+    Notify.success(`'Hooray! We found ${totalHits} images.'`);
 
     renderGalleryMarkup(hits);
+    gallery.refresh();
     loadMoreBtn.show();
     checkHitsMax(hits);
   } catch (error) {
@@ -37,8 +41,10 @@ export async function onLoadMoreBtnClick() {
     loadMoreBtn.loading();
     const { hits } = await imageApi.fetchImages();
     renderGalleryMarkup(hits);
+    gallery.refresh();
     loadMoreBtn.endLoading();
     checkHitsMax(hits);
+    scrollBy();
   } catch (error) {
     console.log(error);
   }
